@@ -1,80 +1,94 @@
 import streamlit as st
-import textwrap # <--- 1. IMPORTANTE: Importamos esto para limpiar la indentación
+import textwrap
 
 # ==========================================
-# 1. CONFIGURACIÓN Y ESTILOS MODERNOS (CSS)
+# 1. CONFIGURACIÓN Y ESTILOS
 # ==========================================
 st.set_page_config(page_title="Match Center Pro", page_icon="⚽", layout="centered")
 
-# Inyectamos CSS avanzado
+# CSS ARREGLADO:
+# 1. Se fuerza el color de texto 'color: #31333F' dentro de la tarjeta.
+# 2. Se eliminan espacios raros y se asegura la jerarquía.
 st.markdown("""
 <style>
     /* Contenedor principal de la tarjeta */
     .modern-card {
         background-color: #ffffff;
+        color: #31333F !important; /* <--- CRUCIAL: Fuerza texto oscuro sobre fondo blanco */
         padding: 20px;
         border-radius: 16px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
         margin-bottom: 20px;
-        border: 1px solid #f0f0f0;
+        border: 1px solid #e0e0e0;
+        font-family: sans-serif;
     }
     
-    /* Etiqueta de Fecha y Hora */
+    /* Etiqueta de Fecha */
     .date-badge {
-        background-color: #f8f9fa;
-        color: #666;
-        padding: 4px 12px;
+        background-color: #f0f2f6;
+        color: #555;
+        padding: 6px 14px;
         border-radius: 20px;
-        font-size: 0.85rem;
-        font-weight: 600;
+        font-size: 0.8rem;
+        font-weight: 700;
         text-transform: uppercase;
-        letter-spacing: 1px;
+        letter-spacing: 0.5px;
         display: inline-block;
-        margin-bottom: 15px;
-        border: 1px solid #eee;
+        margin-bottom: 12px;
     }
 
-    /* Estilos de los equipos y marcador */
+    /* Contenedores Flexbox */
+    .match-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+    }
+
     .team-container {
         display: flex;
         flex-direction: column;
         align-items: center;
-        justify-content: center;
-        width: 100px;
+        justify-content: flex-start;
+        width: 30%; /* Ancho fijo relativo */
     }
+    
     .team-logo {
-        font-size: 3.5rem; 
-        margin-bottom: 5px;
+        font-size: 3rem;
+        margin-bottom: 8px;
+        line-height: 1;
     }
+    
     .team-name {
         font-weight: 700;
         font-size: 1rem;
         text-align: center;
         line-height: 1.2;
-        color: #333; /* Aseguramos color visible */
+        color: #000000; /* Aseguramos negro puro */
     }
     
+    .score-box {
+        text-align: center;
+        width: 40%;
+    }
+
     .score-display {
-        font-size: 3.5rem;
+        font-size: 3rem;
         font-weight: 800;
         color: #1a1a1a;
-        margin: 0 20px;
-        letter-spacing: -2px;
+        line-height: 1;
+        letter-spacing: -1px;
     }
     
     .match-status {
         color: #ff4b4b;
-        font-weight: bold;
-        font-size: 0.8rem;
+        font-weight: 700;
+        font-size: 0.75rem;
         text-transform: uppercase;
-        margin-top: -10px;
+        margin-top: 4px;
     }
 
-    /* Línea de tiempo vertical limpia */
-    .timeline-item {
-        padding: 8px 0;
-        border-bottom: 1px dashed #eee;
-    }
+    /* Línea de tiempo */
     .timeline-min {
         font-weight: bold;
         color: #888;
@@ -84,7 +98,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ==========================================
-# 2. DATOS (Simulados)
+# 2. DATOS
 # ==========================================
 partidos = [
     {
@@ -99,14 +113,14 @@ partidos = [
             {"min": "17'", "texto": "Gol de Koke", "lado": "local", "icono": "⚽"},
             {"min": "32'", "texto": "Amarilla a Pubill", "lado": "local", "icono": "🟨"},
             {"min": "55'", "texto": "Cambio: Entra Beltrán", "lado": "visitante", "icono": "🔄"},
-             {"min": "88'", "texto": "Gol de Hugo Duro", "lado": "visitante", "icono": "⚽"},
+            {"min": "88'", "texto": "Gol de Hugo Duro", "lado": "visitante", "icono": "⚽"},
         ]
     },
     {
         "id": 2,
         "fecha_corta": "VIE 12.12",
         "hora": "21:00",
-        "local": {"nombre": "Real Sociedad", "escudo": "🔵⚪"},
+        "local": {"nombre": "R. Sociedad", "escudo": "🔵⚪"},
         "visitante": {"nombre": "Girona FC", "escudo": "🔴⚪"},
         "marcador": "1 - 2",
         "estado": "FINAL",
@@ -115,28 +129,28 @@ partidos = [
 ]
 
 # ==========================================
-# 3. COMPONENTES VISUALES
+# 3. LÓGICA DE RENDERIZADO
 # ==========================================
 
 def render_match_card(partido):
-    # 2. SOLUCIÓN: Usamos textwrap.dedent()
-    # Esto elimina la indentación común del string para que el HTML 
-    # quede pegado a la izquierda al momento de renderizarse.
-    html_header = textwrap.dedent(f"""
+    # Usamos textwrap.dedent para limpiar la indentación y evitar 
+    # que Markdown lo interprete como bloque de código.
+    # Además, usamos clases CSS limpias.
+    html_code = textwrap.dedent(f"""
         <div class="modern-card">
             <div style="text-align: center;">
                 <span class="date-badge">
-                    📅 {partido['fecha_corta']} &nbsp;|&nbsp; ⏰ {partido['hora']}
+                    📅 {partido['fecha_corta']} • ⏰ {partido['hora']}
                 </span>
             </div>
             
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
+            <div class="match-header">
                 <div class="team-container">
                     <div class="team-logo">{partido['local']['escudo']}</div>
                     <div class="team-name">{partido['local']['nombre']}</div>
                 </div>
 
-                <div style="text-align: center;">
+                <div class="score-box">
                     <div class="score-display">{partido['marcador']}</div>
                     <div class="match-status">{partido['estado']}</div>
                 </div>
@@ -149,33 +163,36 @@ def render_match_card(partido):
         </div>
     """)
     
-    st.markdown(html_header, unsafe_allow_html=True)
+    st.markdown(html_code, unsafe_allow_html=True)
 
-    # Lógica del expander
-    with st.expander("Ver detalles del partido", expanded=False):
+    # Expander nativo de Streamlit
+    with st.expander("Ver detalles", expanded=False):
         if partido['eventos']:
-            st.markdown("##### ⏱️ Minuto a Minuto")
+            st.caption("Minuto a Minuto")
             for evento in partido['eventos']:
-                col1, col2, col3 = st.columns([4, 1, 4])
+                c1, c2, c3 = st.columns([5, 2, 5])
                 
+                # HTML inline simple para alineación
                 if evento['lado'] == 'local':
-                    with col1: st.markdown(f"<div style='text-align:right'><b>{evento['texto']}</b> {evento['icono']}</div>", unsafe_allow_html=True)
-                    with col2: st.markdown(f"<div style='text-align:center' class='timeline-min'>{evento['min']}</div>", unsafe_allow_html=True)
+                    c1.markdown(f"<div style='text-align:right; font-size:0.9rem'><b>{evento['texto']}</b> {evento['icono']}</div>", unsafe_allow_html=True)
+                    c2.markdown(f"<div style='text-align:center; color:#888; font-weight:bold; font-size:0.8rem'>{evento['min']}</div>", unsafe_allow_html=True)
                 else:
-                    with col2: st.markdown(f"<div style='text-align:center' class='timeline-min'>{evento['min']}</div>", unsafe_allow_html=True)
-                    with col3: st.markdown(f"<div style='text-align:left'>{evento['icono']} <b>{evento['texto']}</b></div>", unsafe_allow_html=True)
+                    c2.markdown(f"<div style='text-align:center; color:#888; font-weight:bold; font-size:0.8rem'>{evento['min']}</div>", unsafe_allow_html=True)
+                    c3.markdown(f"<div style='text-align:left; font-size:0.9rem'>{evento['icono']} <b>{evento['texto']}</b></div>", unsafe_allow_html=True)
                 
-                st.markdown("<hr style='margin: 5px 0; border-top: 1px dashed #eee;'>", unsafe_allow_html=True)
+                st.markdown("<div style='height: 1px; background-color: #f0f0f0; margin: 5px 0;'></div>", unsafe_allow_html=True)
         else:
-            st.info("No hay eventos registrados para este partido.")
+            st.info("Sin incidencias destacables.")
 
 # ==========================================
-# 4. APP
+# 4. APP PRINCIPAL
 # ==========================================
 
-st.markdown("## 🏆 LaLiga EA Sports")
-st.markdown("Resultados en vivo y estadísticas")
-st.write("") 
+st.title("🏆 Resultados LaLiga")
+
+# Debugging rápido: Si esto no sale, el problema es de Python, no de CSS
+if not partidos:
+    st.error("No hay datos cargados.")
 
 for p in partidos:
     render_match_card(p)
