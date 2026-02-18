@@ -118,33 +118,33 @@ partidos = [
 
 def render_match_card(partido):
     # Creamos un contenedor HTML personalizado para el encabezado
-    # Esto nos da control total sobre el tamaño y la posición
+    # La corrección está aquí: el HTML está pegado a la izquierda (sin espacios)
     html_header = f"""
-    <div class="modern-card">
-        <div style="text-align: center;">
-            <span class="date-badge">
-                📅 {partido['fecha_corta']} &nbsp;|&nbsp; ⏰ {partido['hora']}
-            </span>
+<div class="modern-card">
+    <div style="text-align: center;">
+        <span class="date-badge">
+            📅 {partido['fecha_corta']} &nbsp;|&nbsp; ⏰ {partido['hora']}
+        </span>
+    </div>
+    
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
+        <div class="team-container">
+            <div class="team-logo">{partido['local']['escudo']}</div>
+            <div class="team-name">{partido['local']['nombre']}</div>
         </div>
-        
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
-            <div class="team-container">
-                <div class="team-logo">{partido['local']['escudo']}</div>
-                <div class="team-name">{partido['local']['nombre']}</div>
-            </div>
 
-            <div style="text-align: center;">
-                <div class="score-display">{partido['marcador']}</div>
-                <div class="match-status">{partido['estado']}</div>
-            </div>
+        <div style="text-align: center;">
+            <div class="score-display">{partido['marcador']}</div>
+            <div class="match-status">{partido['estado']}</div>
+        </div>
 
-            <div class="team-container">
-                <div class="team-logo">{partido['visitante']['escudo']}</div>
-                <div class="team-name">{partido['visitante']['nombre']}</div>
-            </div>
+        <div class="team-container">
+            <div class="team-logo">{partido['visitante']['escudo']}</div>
+            <div class="team-name">{partido['visitante']['nombre']}</div>
         </div>
     </div>
-    """
+</div>
+"""
     
     st.markdown(html_header, unsafe_allow_html=True)
 
