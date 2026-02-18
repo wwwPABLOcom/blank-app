@@ -119,8 +119,7 @@ partidos = [
 def render_match_card(partido):
     # Creamos un contenedor HTML personalizado para el encabezado
     # La corrección está aquí: el HTML está pegado a la izquierda (sin espacios)
-    html_header = f"""
-<div class="modern-card">
+    html_header = f"""<div class="modern-card">
     <div style="text-align: center;">
         <span class="date-badge">
             📅 {partido['fecha_corta']} &nbsp;|&nbsp; ⏰ {partido['hora']}
