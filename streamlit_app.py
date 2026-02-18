@@ -1,139 +1,153 @@
 import streamlit as st
 
 # ==========================================
-# 1. DATOS DE EJEMPLO (Reemplazar con datos reales)
+# 1. CONFIGURACIÓN Y ESTILOS UX
 # ==========================================
-# Lista de partidos con su información básica y detalles opcionales
-partidos_jornada = [
+st.set_page_config(page_title="Match Center", page_icon="⚽", layout="centered")
+
+# Inyectamos CSS para mejorar la legibilidad visual (Tipografía y espaciado)
+st.markdown("""
+<style>
+    .match-card {
+        background-color: #f0f2f6;
+        padding: 15px;
+        border-radius: 10px;
+        margin-bottom: 10px;
+        border-left: 5px solid #ff4b4b;
+    }
+    .score-box {
+        font-size: 24px;
+        font-weight: bold;
+        text-align: center;
+        background-color: white;
+        padding: 5px 15px;
+        border-radius: 5px;
+        border: 1px solid #e0e0e0;
+    }
+    .team-name {
+        font-size: 18px;
+        font-weight: 600;
+    }
+    .event-minute {
+        font-weight: bold;
+        color: #555;
+    }
+    /* Alineación de eventos */
+    .event-home { text-align: right; padding-right: 10px; border-right: 2px solid #ddd; }
+    .event-away { text-align: left; padding-left: 10px; border-left: 2px solid #ddd; }
+</style>
+""", unsafe_allow_html=True)
+
+# ==========================================
+# 2. ESTRUCTURA DE DATOS (MODELO)
+# ==========================================
+# Usamos una estructura rica para manejar cualquier tipo de evento
+partidos = [
     {
-        "fecha": "VIE 12.12.2025", "hora": "21:00", "balon": "⚽",
-        "local": "REAL SOCIEDAD", "escudo_local": "🔵⚪",
-        "resultado": "1-2",
-        "visitante": "GIRONA FC", "escudo_visitante": "🔴⚪",
-        "detalles": [] # Sin detalles
-    },
-    {
-        "fecha": "SAB 13.12.2025", "hora": "14:00", "balon": "⚽",
-        "local": "ATLÉTICO DE MADRID", "escudo_local": "🔴⚪",
-        "resultado": "2-1",
-        "visitante": "VALENCIA CF", "escudo_visitante": "🦇",
-        "detalles": [ # Lista de eventos para el detalle del partido
-            {"minuto": "17'", "equipo": "local", "tipo": "gol", "jugador": "KOKE", "icono": "⚽"},
-            {"minuto": "32'", "equipo": "local", "tipo": "tarjeta", "jugador": "MARC PUBILL", "icono": "🟨"},
-            {"minuto": "42'", "equipo": "local", "tipo": "tarjeta", "jugador": "SØRLOTH", "icono": "🟨"},
-            {"minuto": "46'", "equipo": "local", "tipo": "cambio", "jugador_entra": "LE NORMAND", "jugador_sale": "MOLINA", "icono": "🔄"},
-            {"minuto": "55'", "equipo": "visitante", "tipo": "cambio", "jugador_entra": "BELTRÁN", "jugador_sale": "DIEGO LÓPEZ", "icono": "🔄"},
+        "id": 1,
+        "fecha": "SAB 13.12.2025",
+        "hora": "14:00",
+        "local": {"nombre": "Atlético de Madrid", "corto": "ATM", "escudo": "🛡️"}, # Emoji como placeholder
+        "visitante": {"nombre": "Valencia CF", "corto": "VAL", "escudo": "🦇"},
+        "marcador": {"local": 2, "visitante": 1},
+        "estado": "Finalizado",
+        "eventos": [
+            {"min": 17, "tipo": "gol", "equipo": "local", "jugador": "Koke", "icono": "⚽"},
+            {"min": 32, "tipo": "tarjeta", "equipo": "local", "jugador": "Marc Pubill", "icono": "🟨"},
+            {"min": 42, "tipo": "tarjeta", "equipo": "local", "jugador": "Sørloth", "icono": "🟨"},
+            {"min": 46, "tipo": "cambio", "equipo": "local", "entra": "Le Normand", "sale": "Molina", "icono": "🔄"},
+            {"min": 55, "tipo": "cambio", "equipo": "visitante", "entra": "Beltrán", "sale": "Diego López", "icono": "🔄"},
+            {"min": 88, "tipo": "gol", "equipo": "visitante", "jugador": "Hugo Duro", "icono": "⚽"}, # Evento extra para demo
         ]
     },
     {
-        "fecha": "SAB 13.12.2025", "hora": "16:15", "balon": "⚽",
-        "local": "RCD MALLORCA", "escudo_local": "👹",
-        "resultado": "3-1",
-        "visitante": "ELCHE CF", "escudo_visitante": "🌴",
-        "detalles": []
-    },
-    # ... añadir el resto de partidos siguiendo la misma estructura
+        "id": 2,
+        "fecha": "VIE 12.12.2025",
+        "hora": "21:00",
+        "local": {"nombre": "Real Sociedad", "corto": "RSO", "escudo": "🔵"},
+        "visitante": {"nombre": "Girona FC", "corto": "GIR", "escudo": "🔴"},
+        "marcador": {"local": 1, "visitante": 2},
+        "estado": "Finalizado",
+        "eventos": [] # Sin datos detallados
+    }
 ]
 
 # ==========================================
-# 2. FUNCIONES DE VISUALIZACIÓN
+# 3. COMPONENTES DE UI (VISTA)
 # ==========================================
 
-def mostrar_detalle_partido(partido):
-    """Muestra la línea de tiempo de eventos de un partido."""
-    with st.container():
-        # Usamos columnas para la estructura: Escudo Local | Línea de Tiempo | Escudo Visitante
-        col_escudo_l, col_timeline, col_escudo_v = st.columns([1, 4, 1])
+def render_timeline(eventos):
+    """Renderiza una línea de tiempo vertical (Mejor UX para móviles que la horizontal)"""
+    if not eventos:
+        st.info("No hay detalles minuto a minuto disponibles.")
+        return
 
-        with col_escudo_l:
-            st.markdown(f"<h1 style='text-align: center;'>{partido['escudo_local']}</h1>", unsafe_allow_html=True)
+    # Ordenar eventos por minuto
+    eventos_sorted = sorted(eventos, key=lambda x: x['min'])
 
-        with col_timeline:
-            # Línea de tiempo horizontal (simulada con una barra de progreso)
-            st.progress(100) 
-            
-            # Iterar sobre los eventos y mostrarlos debajo de la línea
-            for evento in partido["detalles"]:
-                # Crear columnas para cada evento para alinearlos horizontalmente
-                cols_evento = st.columns(len(partido["detalles"])) # Tantas columnas como eventos
-                
-                # Encontrar la columna correspondiente al evento actual
-                # (Esto es una simplificación, una implementación real calcularía la posición por minuto)
-                indice_evento = partido["detalles"].index(evento)
-                col_actual = cols_evento[indice_evento]
-
-                with col_actual:
-                    st.markdown(f"<div style='text-align: center; font-weight: bold;'>{evento['minuto']}</div>", unsafe_allow_html=True)
-                    st.markdown(f"<div style='text-align: center;'>{evento['icono']}</div>", unsafe_allow_html=True)
-                    
-                    # Mostrar información del jugador(es)
-                    if evento['tipo'] == 'cambio':
-                         st.markdown(f"<div style='text-align: center; font-size: 0.8em;'>{evento['jugador_entra']}</div>", unsafe_allow_html=True)
-                         st.markdown(f"<div style='text-align: center; font-size: 0.8em; color: gray;'>{evento['jugador_sale']}</div>", unsafe_allow_html=True)
-                    else:
-                        st.markdown(f"<div style='text-align: center; font-size: 0.8em;'>{evento['jugador']}</div>", unsafe_allow_html=True)
-                        
-                    # Indicar con una flecha si es del equipo local o visitante
-                    if evento['equipo'] == 'local':
-                        st.markdown(f"<div style='text-align: center;'>⬆️</div>", unsafe_allow_html=True)
-                    else:
-                        st.markdown(f"<div style='text-align: center;'>⬇️</div>", unsafe_allow_html=True)
-
-        with col_escudo_v:
-             st.markdown(f"<h1 style='text-align: center;'>{partido['escudo_visitante']}</h1>", unsafe_allow_html=True)
-
-
-def mostrar_fila_partido(partido, index):
-    """Muestra la fila resumen de un partido."""
-    # Crear un contenedor expandible para cada partido
-    with st.expander(label="", expanded=False):
-        # Cabecera del expansor (la fila del partido)
-        # Usamos columnas para alinear los elementos como en la imagen
-        col_fecha, col_hora, col_balon, col_partido = st.columns([1.5, 1, 1, 4])
-
-        with col_fecha:
-            st.write(f"**{partido['fecha']}**")
+    st.markdown("### ⏱️ Minuto a Minuto")
+    
+    for evento in eventos_sorted:
+        c1, c2, c3 = st.columns([5, 1, 5])
         
-        with col_hora:
-            st.write(f"**{partido['hora']}**")
+        texto_evento = f"**{evento.get('jugador', '')}**"
+        if evento['tipo'] == 'cambio':
+            texto_evento = f"<span style='color:green'>In: {evento['entra']}</span><br><span style='color:red; font-size:0.8em'>Out: {evento['sale']}</span>"
         
-        with col_balon:
-            st.write(f"{partido['balon']}")
-        
-        with col_partido:
-            # Sub-columnas para el detalle del enfrentamiento
-            c_local, c_esc_l, c_res, c_esc_v, c_visit = st.columns([2, 0.5, 1, 0.5, 2])
-            with c_local: st.write(f"**{partido['local']}**")
-            with c_esc_l: st.write(f"{partido['escudo_local']}")
-            with c_res: st.markdown(f"<div style='text-align: center; font-weight: bold; color: red;'>{partido['resultado']}</div>", unsafe_allow_html=True)
-            with c_esc_v: st.write(f"{partido['escudo_visitante']}")
-            with c_visit: st.write(f"**{partido['visitante']}**")
-
-        # Contenido del expansor (los detalles del partido)
-        # Se muestra solo si hay detalles definidos para el partido
-        if partido["detalles"]:
-            mostrar_detalle_partido(partido)
+        # Lógica de renderizado: Izquierda (Local) o Derecha (Visitante)
+        if evento['equipo'] == 'local':
+            with c1:
+                st.markdown(f"<div class='event-home'>{texto_evento} {evento['icono']}</div>", unsafe_allow_html=True)
+            with c2:
+                st.markdown(f"<div style='text-align:center' class='event-minute'>{evento['min']}'</div>", unsafe_allow_html=True)
         else:
-            st.info("No hay detalles disponibles para este partido.")
+            with c2:
+                st.markdown(f"<div style='text-align:center' class='event-minute'>{evento['min']}'</div>", unsafe_allow_html=True)
+            with c3:
+                st.markdown(f"<div class='event-away'>{evento['icono']} {texto_evento}</div>", unsafe_allow_html=True)
+
+def render_match_header(partido):
+    """Renderiza la tarjeta resumen del partido"""
+    # Usamos columnas para centrar el marcador
+    col_local, col_score, col_visit = st.columns([3, 2, 3])
+    
+    with col_local:
+        st.markdown(f"<div style='text-align:right'><h2>{partido['local']['escudo']}</h2><div class='team-name'>{partido['local']['nombre']}</div></div>", unsafe_allow_html=True)
+    
+    with col_score:
+        st.markdown(f"<br><div class='score-box'>{partido['marcador']['local']} - {partido['marcador']['visitante']}</div>", unsafe_allow_html=True)
+        st.markdown(f"<div style='text-align:center; font-size:0.8em; color:gray'>{partido['estado']}</div>", unsafe_allow_html=True)
+        
+    with col_visit:
+        st.markdown(f"<div style='text-align:left'><h2>{partido['visitante']['escudo']}</h2><div class='team-name'>{partido['visitante']['nombre']}</div></div>", unsafe_allow_html=True)
 
 # ==========================================
-# 3. APLICACIÓN PRINCIPAL
+# 4. APP PRINCIPAL
 # ==========================================
 
-# Configuración de la página
-st.set_page_config(page_title="Jornada 16 | LaLiga", layout="wide")
+st.title("⚽ LaLiga | Match Center")
+st.markdown("**Jornada 16** | Temporada 2025/2026")
+st.divider()
 
-# Título principal
-st.markdown("## 📅 **JORNADA 16 | 2025/2026**")
-
-# Cabecera de la tabla
-col_h_fecha, col_h_hora, col_h_balon, col_h_partido = st.columns([1.5, 1, 1, 4])
-col_h_fecha.markdown("**FECHA**")
-col_h_hora.markdown("**HORARIO**")
-col_h_balon.markdown("**BALÓN**")
-col_h_partido.markdown("**PARTIDO**")
-st.divider() # Línea separadora
-
-# Bucle principal para mostrar cada partido
-for i, partido in enumerate(partidos_jornada):
-    mostrar_fila_partido(partido, i)
+# Iterar sobre los partidos
+for p in partidos:
+    # Contenedor visual para cada partido
+    with st.container():
+        # Cabecera pequeña con fecha
+        st.caption(f"📅 {p['fecha']} | ⏰ {p['hora']}")
+        
+        # Usamos Expander pero personalizado para que actúe como el "acordeón" de la imagen
+        # El label del expander está vacío o minimalista, y metemos el contenido visual dentro
+        with st.expander(f"{p['local']['corto']} vs {p['visitante']['corto']} ({p['marcador']['local']}-{p['marcador']['visitante']})", expanded=(p['id']==1)):
+            
+            # 1. Cabecera visual del partido (Escudos y Goles grandes)
+            render_match_header(p)
+            
+            st.divider()
+            
+            # 2. Línea de tiempo (El detalle clave de la imagen)
+            render_timeline(p['eventos'])
+            
+            # 3. Estadísticas extra (Opcional, mejora la UX)
+            if p['eventos']:
+                st.caption("Goles: ⚽ | Tarjetas: 🟨 🟥 | Cambios: 🔄")
