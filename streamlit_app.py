@@ -1,97 +1,93 @@
 import streamlit as st
 
 # ==========================================
-# 1. CONFIGURACIÓN Y ESTILOS (CSS)
+# 1. CONFIGURACIÓN Y ESTILOS MODERNOS (CSS)
 # ==========================================
 st.set_page_config(page_title="Match Center Pro", page_icon="⚽", layout="centered")
 
+# Inyectamos CSS avanzado para el estilo "Big & Modern"
 st.markdown("""
 <style>
-    /* Estilo para la tarjeta principal */
+    /* Contenedor principal de la tarjeta */
     .modern-card {
         background-color: #ffffff;
         padding: 20px;
-        border-radius: 12px;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        margin-bottom: 15px;
-        border: 1px solid #e0e0e0;
+        border-radius: 16px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        margin-bottom: 20px;
+        border: 1px solid #f0f0f0;
     }
     
-    /* Contenedor Flex para alinear equipos y marcador */
-    .match-content {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        width: 100%;
+    /* Etiqueta de Fecha y Hora (Optimizando espacio) */
+    .date-badge {
+        background-color: #f8f9fa;
+        color: #666;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        display: inline-block;
+        margin-bottom: 15px;
+        border: 1px solid #eee;
     }
 
-    /* Estilos del Equipo */
-    .team-box {
+    /* Estilos de los equipos y marcador */
+    .team-container {
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        width: 30%; /* Ancho fijo para centrar */
+        width: 100px;
     }
     .team-logo {
-        font-size: 3rem; /* Escudos grandes */
-        margin-bottom: 8px;
+        font-size: 3.5rem; /* Escudos GIGANTES */
+        margin-bottom: 5px;
     }
     .team-name {
         font-weight: 700;
         font-size: 1rem;
-        color: #333;
         text-align: center;
+        line-height: 1.2;
     }
-
-    /* Estilos del Marcador Central */
-    .score-box {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        width: 40%;
-    }
-    .score-val {
-        font-size: 2.8rem; /* Marcador MUY grande */
+    
+    .score-display {
+        font-size: 3.5rem; /* Marcador GIGANTE */
         font-weight: 800;
         color: #1a1a1a;
-        line-height: 1;
-        letter-spacing: -1px;
+        margin: 0 20px;
+        letter-spacing: -2px;
     }
-    .match-meta {
-        background-color: #f1f3f5;
-        color: #555;
-        padding: 4px 12px;
-        border-radius: 15px;
-        font-size: 0.75rem;
-        font-weight: 600;
-        margin-top: 10px;
-        border: 1px solid #ddd;
-    }
+    
     .match-status {
-        color: #ff4b4b; /* Rojo para FINAL */
-        font-size: 0.7rem;
+        color: #ff4b4b;
         font-weight: bold;
+        font-size: 0.8rem;
         text-transform: uppercase;
-        margin-bottom: 5px;
+        margin-top: -10px;
     }
 
-    /* Línea de tiempo simple */
-    .timeline-row {
+    /* Línea de tiempo vertical limpia */
+    .timeline-item {
         padding: 8px 0;
-        border-bottom: 1px solid #f0f0f0;
+        border-bottom: 1px dashed #eee;
+    }
+    .timeline-min {
+        font-weight: bold;
+        color: #888;
         font-size: 0.9rem;
     }
 </style>
 """, unsafe_allow_html=True)
 
 # ==========================================
-# 2. DATOS
+# 2. DATOS (Simulados)
 # ==========================================
 partidos = [
     {
         "id": 1,
-        "fecha": "SAB 13.12",
+        "fecha_corta": "SAB 13.12",
         "hora": "14:00",
         "local": {"nombre": "Atlético", "escudo": "🔴⚪"},
         "visitante": {"nombre": "Valencia", "escudo": "🦇"},
@@ -99,16 +95,16 @@ partidos = [
         "estado": "FINAL",
         "eventos": [
             {"min": "17'", "texto": "Gol de Koke", "lado": "local", "icono": "⚽"},
-            {"min": "32'", "texto": "Amarilla Pubill", "lado": "local", "icono": "🟨"},
-            {"min": "55'", "texto": "Entra Beltrán", "lado": "visitante", "icono": "🔄"},
-             {"min": "88'", "texto": "Gol Hugo Duro", "lado": "visitante", "icono": "⚽"},
+            {"min": "32'", "texto": "Amarilla a Pubill", "lado": "local", "icono": "🟨"},
+            {"min": "55'", "texto": "Cambio: Entra Beltrán", "lado": "visitante", "icono": "🔄"},
+             {"min": "88'", "texto": "Gol de Hugo Duro", "lado": "visitante", "icono": "⚽"},
         ]
     },
     {
         "id": 2,
-        "fecha": "VIE 12.12",
+        "fecha_corta": "VIE 12.12",
         "hora": "21:00",
-        "local": {"nombre": "R. Sociedad", "escudo": "🔵⚪"},
+        "local": {"nombre": "Real Sociedad", "escudo": "🔵⚪"},
         "visitante": {"nombre": "Girona FC", "escudo": "🔴⚪"},
         "marcador": "1 - 2",
         "estado": "FINAL",
@@ -117,62 +113,68 @@ partidos = [
 ]
 
 # ==========================================
-# 3. FUNCIÓN DE RENDERIZADO (CORREGIDA)
+# 3. COMPONENTES VISUALES
 # ==========================================
 
 def render_match_card(partido):
-    # IMPORTANTE: El string HTML está pegado a la izquierda (sin espacios al inicio)
-    # para evitar que Markdown lo interprete como bloque de código.
-    html_structure = f"""
-<div class="modern-card">
-    <div class="match-content">
-        <div class="team-box">
-            <div class="team-logo">{partido['local']['escudo']}</div>
-            <div class="team-name">{partido['local']['nombre']}</div>
+    # Creamos un contenedor HTML personalizado para el encabezado
+    # Esto nos da control total sobre el tamaño y la posición
+    html_header = f"""
+    <div class="modern-card">
+        <div style="text-align: center;">
+            <span class="date-badge">
+                📅 {partido['fecha_corta']} &nbsp;|&nbsp; ⏰ {partido['hora']}
+            </span>
         </div>
+        
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
+            <div class="team-container">
+                <div class="team-logo">{partido['local']['escudo']}</div>
+                <div class="team-name">{partido['local']['nombre']}</div>
+            </div>
 
-        <div class="score-box">
-            <div class="match-status">{partido['estado']}</div>
-            <div class="score-val">{partido['marcador']}</div>
-            <div class="match-meta">
-                📅 {partido['fecha']} &nbsp;|&nbsp; ⏰ {partido['hora']}
+            <div style="text-align: center;">
+                <div class="score-display">{partido['marcador']}</div>
+                <div class="match-status">{partido['estado']}</div>
+            </div>
+
+            <div class="team-container">
+                <div class="team-logo">{partido['visitante']['escudo']}</div>
+                <div class="team-name">{partido['visitante']['nombre']}</div>
             </div>
         </div>
-
-        <div class="team-box">
-            <div class="team-logo">{partido['visitante']['escudo']}</div>
-            <div class="team-name">{partido['visitante']['nombre']}</div>
-        </div>
     </div>
-</div>
-"""
-    # Renderizamos el HTML
-    st.markdown(html_structure, unsafe_allow_html=True)
+    """
+    
+    st.markdown(html_header, unsafe_allow_html=True)
 
-    # Botón/Expander para ver detalles (Fuera del HTML puro para funcionalidad nativa)
+    # Usamos un expander invisible (sin label visible) o un botón para ver detalles
+    # En este caso, usaremos un expander limpio debajo de la tarjeta visual
     with st.expander("Ver detalles del partido", expanded=False):
         if partido['eventos']:
+            st.markdown("##### ⏱️ Minuto a Minuto")
             for evento in partido['eventos']:
-                c1, c2, c3 = st.columns([4, 1, 4])
+                # Lógica visual para alinear eventos a izq o der
+                col1, col2, col3 = st.columns([4, 1, 4])
                 
-                # Alineación de eventos (Local izq, Visitante der)
                 if evento['lado'] == 'local':
-                    c1.markdown(f"<div style='text-align:right'><b>{evento['texto']}</b> {evento['icono']}</div>", unsafe_allow_html=True)
-                    c2.markdown(f"<div style='text-align:center; color:#888; font-weight:bold'>{evento['min']}</div>", unsafe_allow_html=True)
+                    with col1: st.markdown(f"<div style='text-align:right'><b>{evento['texto']}</b> {evento['icono']}</div>", unsafe_allow_html=True)
+                    with col2: st.markdown(f"<div style='text-align:center' class='timeline-min'>{evento['min']}</div>", unsafe_allow_html=True)
                 else:
-                    c2.markdown(f"<div style='text-align:center; color:#888; font-weight:bold'>{evento['min']}</div>", unsafe_allow_html=True)
-                    c3.markdown(f"<div style='text-align:left'>{evento['icono']} <b>{evento['texto']}</b></div>", unsafe_allow_html=True)
+                    with col2: st.markdown(f"<div style='text-align:center' class='timeline-min'>{evento['min']}</div>", unsafe_allow_html=True)
+                    with col3: st.markdown(f"<div style='text-align:left'>{evento['icono']} <b>{evento['texto']}</b></div>", unsafe_allow_html=True)
                 
-                st.markdown("<hr style='margin: 0; border: 0; border-top: 1px dashed #eee;'>", unsafe_allow_html=True)
+                st.markdown("<hr style='margin: 5px 0; border-top: 1px dashed #eee;'>", unsafe_allow_html=True)
         else:
-            st.caption("No hay eventos registrados.")
+            st.info("No hay eventos registrados para este partido.")
 
 # ==========================================
-# 4. APP PRINCIPAL
+# 4. APP
 # ==========================================
 
-st.title("🏆 Resultados LaLiga")
-st.write("") # Espacio
+st.markdown("## 🏆 LaLiga EA Sports")
+st.markdown("Resultados en vivo y estadísticas")
+st.write("") # Espaciador
 
 for p in partidos:
     render_match_card(p)
