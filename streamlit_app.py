@@ -1,11 +1,12 @@
 import streamlit as st
+import textwrap # <--- 1. IMPORTANTE: Importamos esto para limpiar la indentación
 
 # ==========================================
 # 1. CONFIGURACIÓN Y ESTILOS MODERNOS (CSS)
 # ==========================================
 st.set_page_config(page_title="Match Center Pro", page_icon="⚽", layout="centered")
 
-# Inyectamos CSS avanzado para el estilo "Big & Modern"
+# Inyectamos CSS avanzado
 st.markdown("""
 <style>
     /* Contenedor principal de la tarjeta */
@@ -18,7 +19,7 @@ st.markdown("""
         border: 1px solid #f0f0f0;
     }
     
-    /* Etiqueta de Fecha y Hora (Optimizando espacio) */
+    /* Etiqueta de Fecha y Hora */
     .date-badge {
         background-color: #f8f9fa;
         color: #666;
@@ -42,7 +43,7 @@ st.markdown("""
         width: 100px;
     }
     .team-logo {
-        font-size: 3.5rem; /* Escudos GIGANTES */
+        font-size: 3.5rem; 
         margin-bottom: 5px;
     }
     .team-name {
@@ -50,10 +51,11 @@ st.markdown("""
         font-size: 1rem;
         text-align: center;
         line-height: 1.2;
+        color: #333; /* Aseguramos color visible */
     }
     
     .score-display {
-        font-size: 3.5rem; /* Marcador GIGANTE */
+        font-size: 3.5rem;
         font-weight: 800;
         color: #1a1a1a;
         margin: 0 20px;
@@ -117,43 +119,43 @@ partidos = [
 # ==========================================
 
 def render_match_card(partido):
-    # Creamos un contenedor HTML personalizado para el encabezado
-    # La corrección está aquí: el HTML está pegado a la izquierda (sin espacios)
-    html_header = f"""<div class="modern-card">
-    <div style="text-align: center;">
-        <span class="date-badge">
-            📅 {partido['fecha_corta']} &nbsp;|&nbsp; ⏰ {partido['hora']}
-        </span>
-    </div>
-    
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
-        <div class="team-container">
-            <div class="team-logo">{partido['local']['escudo']}</div>
-            <div class="team-name">{partido['local']['nombre']}</div>
-        </div>
+    # 2. SOLUCIÓN: Usamos textwrap.dedent()
+    # Esto elimina la indentación común del string para que el HTML 
+    # quede pegado a la izquierda al momento de renderizarse.
+    html_header = textwrap.dedent(f"""
+        <div class="modern-card">
+            <div style="text-align: center;">
+                <span class="date-badge">
+                    📅 {partido['fecha_corta']} &nbsp;|&nbsp; ⏰ {partido['hora']}
+                </span>
+            </div>
+            
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
+                <div class="team-container">
+                    <div class="team-logo">{partido['local']['escudo']}</div>
+                    <div class="team-name">{partido['local']['nombre']}</div>
+                </div>
 
-        <div style="text-align: center;">
-            <div class="score-display">{partido['marcador']}</div>
-            <div class="match-status">{partido['estado']}</div>
-        </div>
+                <div style="text-align: center;">
+                    <div class="score-display">{partido['marcador']}</div>
+                    <div class="match-status">{partido['estado']}</div>
+                </div>
 
-        <div class="team-container">
-            <div class="team-logo">{partido['visitante']['escudo']}</div>
-            <div class="team-name">{partido['visitante']['nombre']}</div>
+                <div class="team-container">
+                    <div class="team-logo">{partido['visitante']['escudo']}</div>
+                    <div class="team-name">{partido['visitante']['nombre']}</div>
+                </div>
+            </div>
         </div>
-    </div>
-</div>
-"""
+    """)
     
     st.markdown(html_header, unsafe_allow_html=True)
 
-    # Usamos un expander invisible (sin label visible) o un botón para ver detalles
-    # En este caso, usaremos un expander limpio debajo de la tarjeta visual
+    # Lógica del expander
     with st.expander("Ver detalles del partido", expanded=False):
         if partido['eventos']:
             st.markdown("##### ⏱️ Minuto a Minuto")
             for evento in partido['eventos']:
-                # Lógica visual para alinear eventos a izq o der
                 col1, col2, col3 = st.columns([4, 1, 4])
                 
                 if evento['lado'] == 'local':
@@ -173,7 +175,7 @@ def render_match_card(partido):
 
 st.markdown("## 🏆 LaLiga EA Sports")
 st.markdown("Resultados en vivo y estadísticas")
-st.write("") # Espaciador
+st.write("") 
 
 for p in partidos:
     render_match_card(p)
